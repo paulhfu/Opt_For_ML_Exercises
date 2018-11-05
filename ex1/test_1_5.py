@@ -60,8 +60,6 @@ ground_truth = [[-180.8883, -177.1889, -169.1336, -187.5254, -176.0691, -169.794
 
 
 def run_test():
-    for f in student.compute_min_marginals(nodes, edges):
-        print(f)
     error = numpy.absolute(numpy.asarray(ground_truth) - student.compute_min_marginals(nodes, edges))
     assert(numpy.all(error < 1e-4))
 

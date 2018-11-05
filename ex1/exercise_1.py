@@ -1,5 +1,6 @@
 from copy import deepcopy
 import numpy as np
+from collections import namedtuple
 # This is the file where should insert your own code.
 #
 # Author: Paul Hilt <mk197@uni-heidelberg.de>
@@ -28,7 +29,7 @@ import numpy as np
 
 
 
-
+Edge = namedtuple('Edge', 'left right costs')
 # For exercise 1.2
 
 def evaluate_energy(nodes, edges, assignment):
@@ -63,9 +64,6 @@ def bruteforce(nodes, edges):
         return brute_force_recursion(node, label+1, assignment)
 
     brute_force_recursion(0, 0, assignment)
-    print(counter)
-    print(l_nodes)
-    print(len(getattr(nodes[0], 'costs')))
     return best_assignment, energy
 
 
@@ -80,11 +78,11 @@ def dynamic_programming(nodes, edges):
     F[-1].append(helper_1)
     helper_1 = []
     for i in range(1, len(nodes)):
-        for t in range(len(getattr(nodes[i], 'costs'))):
-            for s in range(len(getattr(nodes[i-1], 'costs'))):
-                helper_1.append(F[i-1][0][s]
-                                + getattr(nodes[i-1], 'costs')[s]
-                                + get_edgeCosts(edges, i-1, i)[s, t])
+        for s in range(len(getattr(nodes[i], 'costs'))):
+            for t in range(len(getattr(nodes[i-1], 'costs'))):
+                helper_1.append(F[i-1][0][t]
+                                + getattr(nodes[i-1], 'costs')[t]
+                                + get_edgeCosts(edges, i-1, i)[t, s])
             curr_min = min(helper_1)
             min_idx = np.argmin(helper_1)
             r_helper.append(min_idx)
@@ -98,24 +96,35 @@ def dynamic_programming(nodes, edges):
     return F
 
 def compute_min_marginals(nodes, edges):
-    F = []
-    helper_1 = []
-    helper_2 = []
-    helper_1.extend([0 for cost in getattr(nodes[0], 'costs')])
-    F.append(helper_1)
-    helper_1 = []
-    for i in range(1, len(nodes)):
-        for t in range(len(getattr(nodes[i], 'costs'))):
-            for s in range(len(getattr(nodes[i-1], 'costs'))):
-                helper_1.append(F[i-1][s]
-                                + getattr(nodes[i-1], 'costs')[s]
-                                + get_edgeCosts(edges, i-1, i)[s, t])
-            curr_min = min(helper_1)
-            helper_2.append(curr_min)
-            helper_1 = []
-        F.append(helper_2)
-        helper_2 = []
-    return F
+    l_nds = len(nodes)
+    # reverse nodes and edges:
+    rvsd_edges = []
+    for edge in edges:
+        fwd_costs = getattr(edge, 'costs')
+        rvsd_costs = {}
+        for key in list(fwd_costs.keys()):
+            rvsd_costs[(key[1], key[0])] = fwd_costs[key]
+        rvsd_edges.append(Edge(right=abs(getattr(edge, 'left')-(l_nds-1)),
+                           left=abs(getattr(edge, 'right')-(l_nds-1)),
+                           costs=rvsd_costs))
+    rvsd_nodes = list(reversed(nodes))
+
+    # execute forward and backward dynamic programming:
+    fwd_intermediates = dynamic_programming(nodes, edges)
+    bwd_intermediates = dynamic_programming(rvsd_nodes, rvsd_edges)
+    # Make sure, both calculated the map solution
+    assert backtrack(nodes, edges, *fwd_intermediates) == list(reversed(backtrack(rvsd_nodes, rvsd_edges, *bwd_intermediates)))
+
+    # calc the node min marginals
+    bwd_intermediates = list(reversed(bwd_intermediates))
+    min_marginals = []
+    for node, i in zip(nodes, range(l_nds)):
+        min_marginals.append([fwd_intermediates[i][0][l]
+                              + bwd_intermediates[i][0][l]
+                              + getattr(node, 'costs')[l]
+                              for l in range(len(getattr(node, 'costs')))])
+
+    return min_marginals
 
 
 def get_edgeCosts(edges, left, right):
