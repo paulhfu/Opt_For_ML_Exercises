@@ -4,6 +4,7 @@ from collections import namedtuple
 # This is the file where should insert your own code.
 #
 # Author: Paul Hilt <mk197@uni-heidelberg.de>
+# Author: Jonas Massa <massajonas@googlemail.com>
 
 # Theoretical Questions:
 # Exercise 1.1:
@@ -199,3 +200,96 @@ def backtrack(nodes, edges, *F):
     for i in range(len(nodes)-1, 0, -1):
         y[i-1] = F[i][1][y[i]]
     return y
+
+def calc_unary(row, next_r, prev_r):
+    unary_row = []
+    for j in range(row.shape[0]):   
+
+        ######Unary#######
+        if prev_r==None:
+            unary_vert = 0 - next_r[j]
+        elif next_r == None:
+            unary_vert = prev_r[j] - 0
+        else:
+            unary_vert = prev_r[j] - next_r[j]
+
+        if j==0:
+            unary_hor = 0 - row[j+1]
+        elif j==row.shape[0]-1:
+            unary_hor = row[j-1] - 0
+        else:
+            unary_hor = row[j-1] - row[j+1]
+
+        unary_row.append((abs(unary_vert)+abs(unary_hor)).tolist())
+
+    return unary_row
+
+def calc_pairwise(row, next_r):
+    pairwise_list = {}
+    for j in range(row.shape[0]):
+        for j_hat in range(next_r.shape[0]):
+            pairwise_list[(j,j_hat)] = (row[j]-next_r[j_hat])**2
+
+    return pairwise_list
+
+def seamCarving():
+    from PIL import Image 
+    Node = namedtuple('Node', 'costs')
+    Edge = namedtuple('Edge', 'left right costs')
+    node = []
+    edge = []
+
+    tower_img = Image.open('tower.jpg')
+    tower_img = np.array(tower_img)
+
+
+    for i in range(tower_img.shape[0]):
+        if i == 0:
+            unary = calc_unary(tower_img[i], tower_img[i+1], None )
+            pairwise = calc_pairwise(tower_img[i], tower_img[i+1])
+        elif i == tower_img.shape[0]-1:
+            unary = calc_unary(tower_img[i], None, tower_img[i-1])
+        else:
+            unary = calc_unary(tower_img[i], tower_img[i+1], tower_img[i-1])
+            pairwise = calc_pairwise(tower_img[i], tower_img[i+1])
+
+
+        node.append(Node(costs=unary))
+        if  i < tower_img.shape[0]-1:
+            edge.append(Edge(left=i,right=i+1,costs=pairwise))
+
+    # print(node)
+    # print(edge)
+    intermediates = dynamic_programming(node, edge)
+
+seamCarving()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
