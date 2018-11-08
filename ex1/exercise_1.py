@@ -124,8 +124,68 @@ def compute_min_marginals(nodes, edges):
                               + getattr(node, 'costs')[l]
                               for l in range(len(getattr(node, 'costs')))])
 
+    print(min_marginals)
+
     return min_marginals
 
+def dynamic_programming_tree(nodes, edges):
+    F_v = []
+    F_indx = []
+    node_list = [i for i in range(len(nodes))]
+    edge_list = [i for i in range(len(edges))]
+
+    for node in nodes:
+        F_v.append(getattr(node,'costs'))
+        F_indx.append([0 for cost in getattr(nodes[0], 'costs')])
+
+    while len(node_list) > 1 :
+        connect_list = [[] for node in range(len(nodes))]
+        direction_list = [[] for node in range(len(nodes))]
+        edge_kill_list = [[] for i in range(len(edges)+1)]
+
+        for i, u in enumerate(node_list):
+            for j, edge in enumerate(edge_list):
+                if getattr(edges[edge],'left') == u:
+
+                    connect_list[u] += [getattr(edges[edge], 'right')]
+                    direction_list[u] = 'L-R'
+                    edge_kill_list[u] = j
+
+                if getattr(edges[edge],'right') == u:
+
+                    connect_list[u] += [getattr(edges[edge], 'left')]
+                    direction_list[u] = 'R-L'
+                    edge_kill_list[u] = j
+
+            #check if its a leave with only on connection
+            if len(connect_list[u]) == 1:
+                label_list = [0 for i in range(len(F_v[0]))]
+                for label in range(len(F_v[0])):
+                    for t in range(len(F_v[0])):
+                        if direction_list[u] == 'L-R':
+                            label_list[t] = (F_v[u][t] + get_edgeCosts(edges, u, connect_list[u][0])[label, t])
+                        elif direction_list[u] == 'R-L':
+                            label_list[t] = (F_v[u][t] + get_edgeCosts(edges, connect_list[u][0], u)[label, t])
+
+                    min_cost = min(label_list)
+                    min_idx = np.argmin(label_list)
+
+                    F_v[connect_list[u][0]][label] += min_cost
+                    F_indx[connect_list[u][0]][label] = min_idx
+
+                #pop leave 
+                node_list.pop(i)
+                if len(edge_list)>0:
+                    edge_list.pop(edge_kill_list[u])
+
+    intermediates = []
+    for i in range(len(F_v)):
+        intermediates.append([F_v[i], F_indx[i]])
+
+    print(intermediates)
+
+    return intermediates
+                    
 
 def get_edgeCosts(edges, left, right):
     for edge in edges:

@@ -57,7 +57,7 @@ ground_truth = (5, 3, 2, 2, 4, 3, 3, 3, 1, 1, 5, 4, 3, 0, 0, 1, 6, 0, 3, 5, 3)
 
 
 def run_test():
-    intermediates = student.dynamic_programming(nodes, edges)
+    intermediates = student.dynamic_programming_tree(nodes, edges)
     assert(tuple(student.backtrack(nodes, edges, *intermediates)) == ground_truth)
 
 def run_1_3():
@@ -69,5 +69,5 @@ def run_1_3():
     print(energy)
 
 if __name__ == '__main__':
-    #run_test();
-    run_1_3()
+    run_test()
+    # run_1_3()
