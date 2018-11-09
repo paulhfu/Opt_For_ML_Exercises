@@ -96,6 +96,7 @@ def dynamic_programming(nodes, edges):
         r_helper = []
     return F
 
+
 def compute_min_marginals(nodes, edges):
     l_nds = len(nodes)
     # reverse nodes and edges:
@@ -125,7 +126,6 @@ def compute_min_marginals(nodes, edges):
                               + getattr(node, 'costs')[l]
                               for l in range(len(getattr(node, 'costs')))])
 
-    print(min_marginals)
 
     return min_marginals
 
@@ -205,9 +205,8 @@ def calc_unary(row, next_r, prev_r):
     unary_row = []
     for j in range(row.shape[0]):   
 
-        ######Unary#######
-        if prev_r==None:
-            unary_vert = 0 - next_r[j]
+        if prev_r== None:
+            unary_vert = row[j]
         elif next_r == None:
             unary_vert = prev_r[j] - 0
         else:
@@ -220,7 +219,8 @@ def calc_unary(row, next_r, prev_r):
         else:
             unary_hor = row[j-1] - row[j+1]
 
-        unary_row.append((abs(unary_vert)+abs(unary_hor)).tolist())
+        #using sum to make the channel values to one cost
+        unary_row.append(np.sum(abs(unary_vert)+abs(unary_hor)))
 
     return unary_row
 
@@ -228,7 +228,7 @@ def calc_pairwise(row, next_r):
     pairwise_list = {}
     for j in range(row.shape[0]):
         for j_hat in range(next_r.shape[0]):
-            pairwise_list[(j,j_hat)] = (row[j]-next_r[j_hat])**2
+            pairwise_list[(j,j_hat)] = np.sum((row[j]-next_r[j_hat])**2)
 
     return pairwise_list
 
@@ -241,7 +241,6 @@ def seamCarving():
 
     tower_img = Image.open('tower.jpg')
     tower_img = np.array(tower_img)
-
 
     for i in range(tower_img.shape[0]):
         if i == 0:
@@ -258,9 +257,20 @@ def seamCarving():
         if  i < tower_img.shape[0]-1:
             edge.append(Edge(left=i,right=i+1,costs=pairwise))
 
-    # print(node)
-    # print(edge)
     intermediates = dynamic_programming(node, edge)
+
+    # np.save("intermediates", intermediates)
+    # intermediates = np.load("intermediates.npy")
+
+    #just too check if its correct 
+    labels = np.zeros((100,148))
+    for i in range(1, len(intermediates)):
+        for labels in range(148):
+            tower_img[i-1][int(intermediates[i][1][labels])] =[0,0,0]
+
+    im = Image.fromarray(tower_img)
+    im.show()
+
 
 seamCarving()
 
