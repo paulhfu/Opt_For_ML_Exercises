@@ -1,6 +1,7 @@
 from copy import deepcopy
 import numpy as np
 from collections import namedtuple
+from scipy.ndimage.filters import convolve
 # This is the file where should insert your own code.
 #
 # Author: Paul Hilt <mk197@uni-heidelberg.de>
@@ -161,6 +162,7 @@ def dynamic_programming_tree(nodes, edges):
             #check if its a leave with only on connection
             if len(connect_list[u]) == 1:
                 label_list = [0 for i in range(len(F_v[0]))]
+
                 for label in range(len(F_v[0])):
                     for t in range(len(F_v[0])):
                         if direction_list[u] == 'L-R':
@@ -201,14 +203,15 @@ def backtrack(nodes, edges, *F):
         y[i-1] = F[i][1][y[i]]
     return y
 
-def calc_unary(row, next_r, prev_r):
+def calc_unary_pairwise(row, next_r, prev_r):
     unary_row = []
+    pairwise_list = {}
     for j in range(row.shape[0]):   
 
         if prev_r== None:
-            unary_vert = row[j]
+            unary_vert = 0
         elif next_r == None:
-            unary_vert = prev_r[j] - 0
+            unary_vert =  prev_r[j] - 0
         else:
             unary_vert = prev_r[j] - next_r[j]
 
@@ -219,55 +222,88 @@ def calc_unary(row, next_r, prev_r):
         else:
             unary_hor = row[j-1] - row[j+1]
 
-        #using sum to make the channel values to one cost
-        unary_row.append(np.sum(abs(unary_vert)+abs(unary_hor)))
-
-    return unary_row
-
-def calc_pairwise(row, next_r):
-    pairwise_list = {}
-    for j in range(row.shape[0]):
         for j_hat in range(next_r.shape[0]):
-            pairwise_list[(j,j_hat)] = np.sum((row[j]-next_r[j_hat])**2)
+            if next_r != None:
+                pairwise_list[(j,j_hat)] = (row[j]-next_r[j_hat])**2
 
-    return pairwise_list
+        #using sum to make the channel values to one cost
+        unary_row.append(abs(unary_vert)+abs(unary_hor))
 
-def seamCarving():
-    from PIL import Image 
+    return unary_row, pairwise_list
+
+def calc_energy(img):
+    filter_du = np.array([
+        [1.0, 2.0, 1.0],
+        [0.0, 0.0, 0.0],
+        [-1.0, -2.0, -1.0],
+    ])
+    filter_du = np.stack([filter_du] * 3, axis=2)
+
+    filter_dv = np.array([
+        [1.0, 0.0, -1.0],
+        [2.0, 0.0, -2.0],
+        [1.0, 0.0, -1.0],
+    ])
+    filter_dv = np.stack([filter_dv] * 3, axis=2)
+    img = img.astype('float32')
+    convolved = np.absolute(convolve(img, filter_du)) + np.absolute(convolve(img, filter_dv))
+    energy_map = convolved.sum(axis=2)
+    return energy_map
+
+
+def calc_intermediates_and_Energy(img):
     Node = namedtuple('Node', 'costs')
     Edge = namedtuple('Edge', 'left right costs')
     node = []
     edge = []
+    energy = calc_energy(img)
+    e_Mat = energy.copy()
 
+    for i in range(img.shape[0]):
+        if i == 0:
+            unary, pairwise= calc_unary_pairwise(e_Mat[i], e_Mat[i+1], None )
+        elif i == img.shape[0]-1:
+            unary, pairwise = calc_unary_pairwise(e_Mat[i], None, e_Mat[i-1])
+        else:
+            unary, pairwise = calc_unary_pairwise(e_Mat[i], e_Mat[i+1], e_Mat[i-1])
+
+        node.append(Node(costs=unary))
+        if  i < img.shape[0]-1:
+            edge.append(Edge(left=i, right=i+1, costs=pairwise))
+
+    intermediates = dynamic_programming(node, edge)
+    back = backtrack(node, edge, *intermediates)
+
+    return intermediates, e_Mat, back
+
+def carve_out(img):
+    h,w = img.shape[0:2]
+
+    intermediates, M, back = calc_intermediates_and_Energy(img)
+
+    j = np.argmin(M[-1] + intermediates[-1][0])
+    mask = np.ones((h,w), dtype=np.bool)
+
+    for i in reversed(range(h)):
+        mask[i, j] = False
+        j = back[i]
+
+    mask = np.stack([mask]*3, axis = 2)
+    img = img[mask].reshape((h, w-1, 3))
+
+    return img
+
+def seamCarving():
+    from PIL import Image 
     tower_img = Image.open('tower.jpg')
     tower_img = np.array(tower_img)
 
-    for i in range(tower_img.shape[0]):
-        if i == 0:
-            unary = calc_unary(tower_img[i], tower_img[i+1], None )
-            pairwise = calc_pairwise(tower_img[i], tower_img[i+1])
-        elif i == tower_img.shape[0]-1:
-            unary = calc_unary(tower_img[i], None, tower_img[i-1])
-        else:
-            unary = calc_unary(tower_img[i], tower_img[i+1], tower_img[i-1])
-            pairwise = calc_pairwise(tower_img[i], tower_img[i+1])
+    while tower_img.shape[1] > 100:
+        tower_img = carve_out(tower_img)
+        print(tower_img.shape[1])
 
 
-        node.append(Node(costs=unary))
-        if  i < tower_img.shape[0]-1:
-            edge.append(Edge(left=i,right=i+1,costs=pairwise))
-
-    intermediates = dynamic_programming(node, edge)
-
-    # np.save("intermediates", intermediates)
-    # intermediates = np.load("intermediates.npy")
-
-    #just too check if its correct 
-    labels = np.zeros((100,148))
-    for i in range(1, len(intermediates)):
-        for labels in range(148):
-            tower_img[i-1][int(intermediates[i][1][labels])] =[0,0,0]
-
+    print(tower_img.shape)
     im = Image.fromarray(tower_img)
     im.show()
 
