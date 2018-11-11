@@ -28,6 +28,14 @@ from scipy.ndimage.filters import convolve
 # role does the parameter λ play for the “Potts” pairwise potential?
 # The energy function penalizes unequal labelings of two neighbouring vertices. λ can be seen as regularization
 # parameter. It determines, how much to trust the pairwise costs relative to the unaries.
+#
+# Exercise 1.3
+# Derive the time complexity of the algorithm.
+# The time complexity is N^L so in the example: 3^(3+3+2)
+#
+# Exercise 1.4
+# The time complexity of this algorithm is: O(L^2|V|). Where L stands for the number of distinct labels and |V| for
+# the number of nodes in the graph
 
 
 
