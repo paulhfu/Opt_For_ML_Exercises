@@ -138,6 +138,7 @@ def compute_min_marginals(nodes, edges):
 
     return min_marginals
 
+# Exercise 1.6 
 def dynamic_programming_tree(nodes, edges):
     F_v = []
     F_indx = []
@@ -193,8 +194,6 @@ def dynamic_programming_tree(nodes, edges):
     for i in range(len(F_v)):
         intermediates.append([F_v[i], F_indx[i]])
 
-    print(intermediates)
-
     return intermediates
                     
 
@@ -211,12 +210,17 @@ def backtrack(nodes, edges, *F):
         y[i-1] = F[i][1][y[i]]
     return y
 
+# Exercise 1.7
 def calc_unary_pairwise(row, next_r, prev_r):
+    """
+    calculates the unary and pairwise potentials for each row in the image
+    """
     unary_row = []
     pairwise_list = {}
-    for j in range(row.shape[0]):   
 
-        if prev_r== None:
+    for j in range(row.shape[0]):  
+
+        if prev_r ==None: 
             unary_vert = 0
         elif next_r == None:
             unary_vert =  prev_r[j] - 0
@@ -230,50 +234,30 @@ def calc_unary_pairwise(row, next_r, prev_r):
         else:
             unary_hor = row[j-1] - row[j+1]
 
-        for j_hat in range(next_r.shape[0]):
-            if next_r != None:
-                pairwise_list[(j,j_hat)] = (row[j]-next_r[j_hat])**2
+        if next_r != None:
+            for j_hat in range(next_r.shape[0]):
+                    pairwise_list[(j,j_hat)] = np.sum((row[j]-next_r[j_hat])**2)
 
-        #using sum to make the channel values to one cost
-        unary_row.append(abs(unary_vert)+abs(unary_hor))
+        if prev_r ==None:
+            unary_row.append(np.sum(row[j]))
+        else:
+            unary_row.append(np.sum(abs(unary_vert)+abs(unary_hor)))
 
     return unary_row, pairwise_list
-
-def calc_energy(img):
-    filter_du = np.array([
-        [1.0, 2.0, 1.0],
-        [0.0, 0.0, 0.0],
-        [-1.0, -2.0, -1.0],
-    ])
-    filter_du = np.stack([filter_du] * 3, axis=2)
-
-    filter_dv = np.array([
-        [1.0, 0.0, -1.0],
-        [2.0, 0.0, -2.0],
-        [1.0, 0.0, -1.0],
-    ])
-    filter_dv = np.stack([filter_dv] * 3, axis=2)
-    img = img.astype('float32')
-    convolved = np.absolute(convolve(img, filter_du)) + np.absolute(convolve(img, filter_dv))
-    energy_map = convolved.sum(axis=2)
-    return energy_map
-
 
 def calc_intermediates_and_Energy(img):
     Node = namedtuple('Node', 'costs')
     Edge = namedtuple('Edge', 'left right costs')
     node = []
     edge = []
-    energy = calc_energy(img)
-    e_Mat = energy.copy()
 
     for i in range(img.shape[0]):
         if i == 0:
-            unary, pairwise= calc_unary_pairwise(e_Mat[i], e_Mat[i+1], None )
+            unary, pairwise = calc_unary_pairwise(img[i], img[i+1], None )
         elif i == img.shape[0]-1:
-            unary, pairwise = calc_unary_pairwise(e_Mat[i], None, e_Mat[i-1])
+            unary, pairwise = calc_unary_pairwise(img[i], None, img[i-1])
         else:
-            unary, pairwise = calc_unary_pairwise(e_Mat[i], e_Mat[i+1], e_Mat[i-1])
+            unary, pairwise = calc_unary_pairwise(img[i], img[i+1], img[i-1])
 
         node.append(Node(costs=unary))
         if  i < img.shape[0]-1:
@@ -282,36 +266,38 @@ def calc_intermediates_and_Energy(img):
     intermediates = dynamic_programming(node, edge)
     back = backtrack(node, edge, *intermediates)
 
-    return intermediates, e_Mat, back
+    return intermediates, back
 
-def carve_out(img):
+def carve(img):
     h,w = img.shape[0:2]
-
-    intermediates, M, back = calc_intermediates_and_Energy(img)
-
-    j = np.argmin(M[-1] + intermediates[-1][0])
+    #the intermediates needs to be recalculated for each image size while shrinking
+    intermediates, back = calc_intermediates_and_Energy(img)
     mask = np.ones((h,w), dtype=np.bool)
 
     for i in reversed(range(h)):
-        mask[i, j] = False
         j = back[i]
-
+        mask[i, j] = False
+        
+    #using a mask to carve out pixles which are False
     mask = np.stack([mask]*3, axis = 2)
     img = img[mask].reshape((h, w-1, 3))
 
     return img
 
 def seamCarving():
+    """
+    function that takes the tower image as input and carves
+    the columns out until it reaches a image width of 100 pixel
+    """
     from PIL import Image 
     tower_img = Image.open('tower.jpg')
     tower_img = np.array(tower_img)
 
     while tower_img.shape[1] > 100:
-        tower_img = carve_out(tower_img)
+        tower_img = carve(tower_img)
         print(tower_img.shape[1])
 
-
-    print(tower_img.shape)
+    #visualizing the final result
     im = Image.fromarray(tower_img)
     im.show()
 
