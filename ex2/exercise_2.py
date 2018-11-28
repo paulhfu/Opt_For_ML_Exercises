@@ -7,7 +7,10 @@
 # Exercise 2.2:
 # The LP solution has no variables that are no integers. This is why the LP solution, the rounded solution and the ILP
 # solution match exactly. However
-
+# Exercise 2.3:
+# The LP variables for the nodes of the lp solutions have all the value 0.5. The np.argmax function returns the
+# smallest index of the largest value in an array. This is why the labels of the rounded solution all result to be 0.
+# Whereas the ilp solution is [1, 1, 0]
 
 from pulp import *
 from pulp.solvers import *

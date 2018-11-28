@@ -35,11 +35,25 @@ def make_graph():
 def run_example():
     nodes, edges = make_graph()
     lp = student.convert_to_lp(nodes, edges)
-    assert(lp.solve())
+    ilp = student.convert_to_ilp(nodes, edges)
 
+    assert(lp.solve())
+    assert(ilp.solve())
+
+    lp_lbl = student.lp_to_labeling(nodes, edges, lp)
+    ilp_lbl = student.ilp_to_labeling(nodes, edges, ilp)
+
+    print('###########LP-SOLUTION##########')
+    print("labeling:")
+    print(lp_lbl)
     for var in lp.variables():
         print('{} -> {}'.format(var.name, var.value()))
 
+    print('##########ILP-SOLUTION##########')
+    print("labeling:")
+    print(ilp_lbl)
+    for var in ilp.variables():
+        print('{} -> {}'.format(var.name, var.value()))
 
 if __name__ == '__main__':
     run_example()
