@@ -71,7 +71,7 @@ def ilp_to_labeling(nodes, edges, ilp):
     sol = [0] * len(nodes)
     for v in ilp.variables():
         if "u_n" in v.name and v.varValue == 1:
-            sol[int(v.name[3])] = int(v.name[5])
+            sol[int(v.name[3:v.name.find(',')])] = int(v.name[v.name.find(',')+1])
     return sol
 
 def convert_to_lp(nodes, edges):
