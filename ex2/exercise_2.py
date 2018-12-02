@@ -7,10 +7,26 @@
 # Exercise 2.2:
 # The LP solution has no variables that are no integers. This is why the LP solution, the rounded solution and the ILP
 # solution match exactly.
+
 # Exercise 2.3:
 # The LP variables for the nodes of the lp solutions have all the value 0.5. The np.argmax function returns the
 # smallest index of the largest value in an array. This is why the labels of the rounded solution all result to be 0.
 # Whereas the ilp solution is [1, 1, 0].
+
+# Exercise 2.4:
+# File: exercise_2_4.py
+
+# Exercise 2.5:
+# tsu_down_32: 12x9 = 108 pixel, each pixel has 16 labels -> total: 16^108 labeling. Number of variables in the 
+# ILP presentation: 16x108 = 1728 labels. Number of edges = 194 --> 194 * 16^2 = 49664 total number of label pairs.
+# O(49664) variables in the ILP respresentation. The total number of constraints has the same order O(49664) as the 
+# number of variables
+
+# tsu_down_16: 432 pixels. Number edges = 821 --> 821 * 16^2 = 210176  --> O(210176)
+# tsu_down_8: 1728 pixels. Number edges = 3371 --> 3371 * 16^2 = 862976 --> O(862976)
+# tsu_down_4: 6912 pixels. Number edges = 13655 --> 13655 * 16^2 = 3495680 --> O(3495680)
+# tsu_down_2: 27648 pixels. Number edges = 54959 --> 54959 * 16^2 = 14069504 --> O(14069504)
+# tsu_down_1: 110592 pixels. Number edges = 220511 --> 220511 * 16^2 = 56450816 --> O(56450816)
 
 from pulp import *
 from pulp.solvers import *
@@ -136,3 +152,5 @@ def lp_to_labeling(nodes, edges, lp):
                 bin[int(v.name[v.name.find(',') + 1:len(v.name)])] = v.varValue  # Collect node variables for each node
         sol[n] = np.argmax(np.asarray(bin))  # the index of the largest variable corresponds to rounded labeling
     return sol
+
+
