@@ -7,10 +7,17 @@
 # Exercise 2.2:
 # The LP solution has no variables that are no integers. This is why the LP solution, the rounded solution and the ILP
 # solution match exactly.
+
 # Exercise 2.3:
 # The LP variables for the nodes of the lp solutions have all the value 0.5. The np.argmax function returns the
 # smallest index of the largest value in an array. This is why the labels of the rounded solution all result to be 0.
-# Whereas the ilp solution is [1, 1, 0].
+# Whereas the ilp solution is [1, 1, 0]. (File: example_1_3.py)
+
+# Exercise 2.4:
+# File: exercise_2_4.py
+
+# Exercise 2.5:
+# File: exercise_2.5.py
 
 from pulp import *
 from pulp.solvers import *
@@ -136,3 +143,5 @@ def lp_to_labeling(nodes, edges, lp):
                 bin[int(v.name[v.name.find(',') + 1:len(v.name)])] = v.varValue  # Collect node variables for each node
         sol[n] = np.argmax(np.asarray(bin))  # the index of the largest variable corresponds to rounded labeling
     return sol
+
+
