@@ -41,10 +41,55 @@ def ICM(nodes, edges):
 		if len(check_list) == len(labeling):
 			break
 
-ICM(nodes, edges)
+# ICM(nodes, edges)
 
 def Block_ICM(nodes, edges):
 
 	grid = determine_grid(nodes, edges)	
+	print(grid.height, grid.width)
 	decompostion = row_column_decomposition(grid)
-	
+
+	label_list = []
+	for _ in range(len(decompostion)):
+		label_list.append([random.randint(0,15) for _ in range(len(decompostion[0]))])
+
+	#row 
+	for start in range(2): #loop for even and odd
+		for n in range(start, grid.height, 2):
+			for i, node in enumerate(range(len(decompostion[n]))):				
+				cost = []
+
+				for label in range(len(nodes[0][0])-1):
+					if n==0:
+						cost.append(decompostion[n+1][i].costs[label, label_list[n][i]])
+					elif n==grid.height-1:
+						cost.append(decompostion[n-1][i].costs[label, label_list[n][i]])
+					else:
+						pairwise = decompostion[n+1][i].costs[label, label_list[n][i]] + decompostion[n-1][i].costs[label, label_list[n][i]]
+						cost.append(pairwise)
+
+				label = np.argmin(cost)
+				label_list[n][i] = label
+
+	#column
+	for start in range(2):
+		for n in range(start+grid.height, len(decompostion), 2):
+			for i, node in enumerate(range(len(decompostion[n]))):				
+				cost = []
+
+				for label in range(len(nodes[0][0])-1):
+					if n==grid.height:
+						cost.append(decompostion[n+1][i].costs[label, label_list[n][i]])
+					elif n==len(decompostion)-1:
+						cost.append(decompostion[n-1][i].costs[label, label_list[n][i]])
+					else:
+						pairwise = decompostion[n+1][i].costs[label, label_list[n][i]] + decompostion[n-1][i].costs[label, label_list[n][i]]
+						cost.append(pairwise)
+
+				label = np.argmin(cost)
+				label_list[n][i] = label
+
+
+
+
+Block_ICM(nodes, edges)
