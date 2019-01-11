@@ -4,9 +4,33 @@ import random
 import numpy as np
 from copy import deepcopy
 
+#3.1 :
+#What type of algorithm is it ?
+# ICM and Block-ICM are coordinate descent algorithms
+
+#Does the algorithm provide guarantees?
+# ICM and Block-ICM are both finding a labeling with lower energy, but the
+# ICM optimization depends highly on the label initialization and often finds only a local minimum 
+
+#Time Complexity of my implementation:
+# ICM: O(nodes * edges) BlockICM: O(grid.width * grid.height * nodes * labels) without parallelization
+
+#Describe the quality of the output
+# ICM: Energy of the labeling decreases slightly and varies with the initial labeling 
+# Block-ICM: 
+
+
 
 nodes, edges = load_downsampled_model(32)
 
+
+def evaluate_energy(nodes, edges, assignment):
+    e=0         # Total energy of graph
+    for node in range(len(nodes)):
+        e += getattr(nodes[node], 'costs')[assignment[node]]
+    for edge in edges:
+        e += getattr(edge, 'costs')[assignment[getattr(edge, 'left')], assignment[getattr(edge, 'right')]]
+    return e
 
 def ICM(nodes, edges):
 
@@ -15,6 +39,8 @@ def ICM(nodes, edges):
 	for _ in range(len(nodes)):
 		labeling.append(random.randint(0,15))
 
+	#energy after init
+	print(evaluate_energy(nodes, edges, labeling))
 
 	while True:
 
@@ -41,7 +67,10 @@ def ICM(nodes, edges):
 		if len(check_list) == len(labeling):
 			break
 
-# ICM(nodes, edges)
+	print(evaluate_energy(nodes, edges, labeling))
+
+
+ICM(nodes, edges)
 
 def Block_ICM(nodes, edges):
 
@@ -89,7 +118,8 @@ def Block_ICM(nodes, edges):
 				label = np.argmin(cost)
 				label_list[n][i] = label
 
-
-
+	print(len(label_list))
+	print(evaluate_energy(nodes, edges, label_list))
 
 Block_ICM(nodes, edges)
+
