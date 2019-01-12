@@ -6,7 +6,9 @@ from copy import deepcopy
 
 #3.1 :
 #What type of algorithm is it ?
-# ICM and Block-ICM are coordinate descent algorithms
+# ICM and Block-ICM are coordinate descent algorithms. They both apply the subgradient method with respect to one
+# variable or to one block (acyclic induced subgraph) at a time. This induces, that they are not strictly non increasing
+# and also they find fixed points that are local optima where thy stop changing the labels.
 
 #Does the algorithm provide guarantees?
 # ICM and Block-ICM are both finding a labeling with lower energy, but the
@@ -17,8 +19,37 @@ from copy import deepcopy
 
 #Describe the quality of the output
 # ICM: Energy of the labeling decreases slightly and varies with the initial labeling 
-# Block-ICM: 
+# Block-ICM: For Graph with induced subgraphs that are acyclic, Block-ICM most likely performs better than ICM,
+# however there is no guarantee for that both algorithms are theoretically able to find the global optimum. They both
+# find local optima where ICM finds local optima per node and Bloch-ICM per induced subgraph which it perfoms on.
 
+#3.2 :
+#What type of algorithm is it ?
+# The subgradient method acting on the dual problem computes all subgradients with respect to each lagrange dual variable (one per step) and updates them.
+# All except two of those subgradients are 0, meaning the label is locally optimal and does not need a change but still all
+# subgradients have to be computed in each iteration. This, and the diminishing stepsize which is required for the convergence
+# criterium make the algorithm slow.
+
+#Does the algorithm provide guarantees?
+# the algorithm guarantees convergence to the global optimum in a finite number of iterations. If the primal problem is
+# dual optimal.
+
+#3.3 :
+#What type of algorithm is it ?
+# It solves the primal problem by redestributing costs such that all unaries, are 0 and all costs are defined by the
+# pairwise costs.
+# In each iteration the locally optimal edge is selected per node.
+
+#Does the algorithm provide guarantees?
+# It enforces convergence to node edge agreement (0-subgradient).
+# The number of locally optimal edges with node edge agreement is non decreasing. However there are cases
+# (even for acyclic graphs) where this algorithm is very slow. This is overcome by anisotropic diffusion.
+
+#3.4 :
+#What type of algorithm is it ?
+
+
+#Does the algorithm provide guarantees?
 
 
 nodes, edges = load_downsampled_model(32)
