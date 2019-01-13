@@ -104,52 +104,69 @@ def ICM(nodes, edges):
 ICM(nodes, edges)
 
 def Block_ICM(nodes, edges):
+	"""
+	not finished, missing unary cost and stop criterium
+	"""
 
 	grid = determine_grid(nodes, edges)	
 	print(grid.height, grid.width)
 	decompostion = row_column_decomposition(grid)
 
+	label_arr = np.random.randint(15, size=(grid.height, grid.width))
+
 	label_list = []
-	for _ in range(len(decompostion)):
-		label_list.append([random.randint(0,15) for _ in range(len(decompostion[0]))])
+	#convert to list 
+	for i in range(label_arr.shape[0]):
+		for j in range(label_arr.shape[1]):
+			label_list.append(label_arr[i,j])
+	print(evaluate_energy(nodes, edges, label_list))
+
 
 	#row 
 	for start in range(2): #loop for even and odd
-		for n in range(start, grid.height, 2):
+		for n in range(start, grid.height-1, 2):
 			for i, node in enumerate(range(len(decompostion[n]))):				
 				cost = []
 
 				for label in range(len(nodes[0][0])-1):
 					if n==0:
-						cost.append(decompostion[n+1][i].costs[label, label_list[n][i]])
+						cost.append(decompostion[n+1][i].costs[label, label_arr[n][i]])
 					elif n==grid.height-1:
-						cost.append(decompostion[n-1][i].costs[label, label_list[n][i]])
+						cost.append(decompostion[n-1][i].costs[label, label_arr[n][i]])
 					else:
-						pairwise = decompostion[n+1][i].costs[label, label_list[n][i]] + decompostion[n-1][i].costs[label, label_list[n][i]]
+						pairwise = decompostion[n+1][i].costs[label, label_arr[n][i]] + decompostion[n-1][i].costs[label, label_arr[n][i]]
 						cost.append(pairwise)
 
 				label = np.argmin(cost)
-				label_list[n][i] = label
+				label_arr[n][i] = label
 
 	#column
 	for start in range(2):
-		for n in range(start+grid.height, len(decompostion), 2):
+		for n in range(start+grid.height, len(decompostion)-1, 2):
 			for i, node in enumerate(range(len(decompostion[n]))):				
 				cost = []
 
 				for label in range(len(nodes[0][0])-1):
 					if n==grid.height:
-						cost.append(decompostion[n+1][i].costs[label, label_list[n][i]])
-					elif n==len(decompostion)-1:
-						cost.append(decompostion[n-1][i].costs[label, label_list[n][i]])
+						cost.append(decompostion[n+1][i].costs[label, label_arr[i][n-grid.width]])
+					elif n==grid.width-1:
+						cost.append(decompostion[n-1][i].costs[label, label_arr[i][n-grid.width]])
 					else:
-						pairwise = decompostion[n+1][i].costs[label, label_list[n][i]] + decompostion[n-1][i].costs[label, label_list[n][i]]
+						pairwise = decompostion[n+1][i].costs[label, label_arr[i][n-(grid.width)]] + decompostion[n-1][i].costs[label, label_arr[i][n-(grid.width)]]
 						cost.append(pairwise)
 
 				label = np.argmin(cost)
-				label_list[n][i] = label
+				label_arr[i][n-grid.width] = label
 
-	print(len(label_list))
+
+
+	label_list = []
+	#convert to list 
+	for i in range(label_arr.shape[0]):
+		for j in range(label_arr.shape[1]):
+			label_list.append(label_arr[i,j])
+
+	# print(label_list)
 	print(evaluate_energy(nodes, edges, label_list))
 
 Block_ICM(nodes, edges)
